@@ -1,6 +1,7 @@
 from enum import Enum
 
 DATE_FORMAT_STRING = '%Y-%m-%d'
+MONTH_DAY_FORMAT_STRING = '%m-%d'
 
 LAA = 'Los Angeles Angels'
 AZ = 'Arizona Diamondbacks'

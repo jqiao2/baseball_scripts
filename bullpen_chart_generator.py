@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import date, timedelta, datetime
+from datetime import date, timedelta
 
 import numpy as np
 import pandas as pd
@@ -7,9 +7,9 @@ import statsapi
 from PIL import ImageFont, ImageDraw, Image
 from tabulate import tabulate
 
-from constants import TEAMS, DATE_FORMAT_STRING
+from constants import TEAMS
 from padres_constants import PADRES_STARTERS
-from utils import get_str_date
+from utils import convert_date_to_str, convert_str_to_date, convert_date_to_month_day_str
 
 
 # returns bullpen ids (minus starters as defined in constants)
@@ -29,7 +29,7 @@ def get_scheduled_games_bullpen() -> (date, list[int]):
     print("Next San Diego Padres game is on {} against the {}".format(next_scheduled_game_date_str,
                                                                       scheduled_game['{}_name'.format(opposing_team)]))
 
-    next_scheduled_game_date = datetime.strptime(next_scheduled_game_date_str, DATE_FORMAT_STRING).date()
+    next_scheduled_game_date = convert_str_to_date(next_scheduled_game_date_str)
     bullpen = boxscore[team]['bullpen']
     bullpen = [pitcher for pitcher in bullpen if pitcher not in PADRES_STARTERS]
     return next_scheduled_game_date, bullpen
@@ -40,6 +40,8 @@ def save_text_chart(df: pd.DataFrame):
     text_chart = tabulate(sanitized_df,
                           headers='keys',
                           floatfmt=".0f",
+                          numalign="right",
+                          stralign="right",
                           tablefmt='psql')
 
     img_width = 2000
@@ -72,22 +74,22 @@ def fetch_pitch_counts(days=5) -> pd.DataFrame:
     next_scheduled_game_date, relief_pitchers_list = get_scheduled_games_bullpen()
 
     end_date = next_scheduled_game_date - timedelta(days=1)
-    start_date = end_date - timedelta(days=days)
-    games_list = statsapi.schedule(team=TEAMS.San_Diego_Padres.value, start_date=get_str_date(start_date),
-                                   end_date=get_str_date(end_date))
+    start_date = next_scheduled_game_date - timedelta(days=days)
+    games_list = statsapi.schedule(team=TEAMS.San_Diego_Padres.value, start_date=convert_date_to_str(start_date),
+                                   end_date=convert_date_to_str(end_date))
 
     # sanitize games list
     games_list = [game for game in games_list if game['status'] == 'Final' and game['game_type'] == 'R']
 
-    pitch_chart = {d.strftime('%m-%d'): defaultdict(int) for d in pd.date_range(start=start_date, end=end_date)}
+    pitch_chart = {d.date(): defaultdict(int) for d in pd.date_range(start=start_date, end=end_date)}
+
     for game in games_list:
         if game['home_id'] == TEAMS.San_Diego_Padres.value:
             home_away = 'home'
         else:
             home_away = 'away'
 
-        game_date = game['game_date'][5:]  # remove year
-        pitch_chart[game_date] = defaultdict(int)
+        game_date = convert_str_to_date(game['game_date'])
 
         boxscore_data = statsapi.boxscore_data(game['game_id'])
         for rp in relief_pitchers_list:
@@ -95,6 +97,8 @@ def fetch_pitch_counts(days=5) -> pd.DataFrame:
             pitches_thrown = player_stats['stats']['pitching'].get('pitchesThrown', 0)
             pitch_chart[game_date][player_stats['person']['fullName']] += pitches_thrown
 
+    pitch_chart = dict(map(lambda k, v: (convert_date_to_month_day_str(k), v),
+                           pitch_chart.keys(), pitch_chart.values()))
     df = pd.DataFrame.from_dict(pitch_chart)
 
     save_text_chart(df)
