@@ -111,7 +111,8 @@ teams = {
 }
 
 divisions = {
-    "All Teams": {HOU, SEA, TEX, LAA, OAK, CLE, MIN, KC, DET, CWS, BAL, NYY, BOS, TB, TOR, LAD, SD, AZ, SF, COL, MIL, STL, PIT, CIN, CHC, PHI, ATL, NYM, WSH, MIA},
+    "All Teams": {HOU, SEA, TEX, LAA, OAK, CLE, MIN, KC, DET, CWS, BAL, NYY, BOS, TB, TOR, LAD, SD, AZ, SF, COL, MIL,
+                  STL, PIT, CIN, CHC, PHI, ATL, NYM, WSH, MIA},
     AL: {HOU, SEA, TEX, LAA, OAK, CLE, MIN, KC, DET, CWS, BAL, NYY, BOS, TB, TOR},
     AL_WEST: {HOU, SEA, TEX, LAA, OAK},
     AL_CENTRAL: {CLE, MIN, KC, DET, CWS},

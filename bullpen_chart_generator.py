@@ -93,9 +93,17 @@ def fetch_pitch_counts(days=5) -> pd.DataFrame:
 
         boxscore_data = statsapi.boxscore_data(game['game_id'])
         for rp in relief_pitchers_list:
-            player_stats = boxscore_data[home_away]['players']['ID{}'.format(rp)]
-            pitches_thrown = player_stats['stats']['pitching'].get('pitchesThrown', 0)
-            pitch_chart[game_date][player_stats['person']['fullName']] += pitches_thrown
+            rp_id = 'ID{}'.format(rp)
+            players_stats = boxscore_data[home_away]['players']
+            if rp_id in players_stats:
+                pitcher_stats = players_stats[rp_id]
+                pitcher_name = pitcher_stats['person']['fullName']
+                pitches_thrown = pitcher_stats['stats']['pitching'].get('pitchesThrown', 0)
+                pitch_chart[game_date][pitcher_name] += pitches_thrown
+            else:
+                # relief pitcher recently called up etc
+                pitcher_name = statsapi.lookup_player(rp)[0]['fullName']
+                pitch_chart[game_date][pitcher_name] += 0
 
     pitch_chart = dict(map(lambda k, v: (convert_date_to_month_day_str(k), v),
                            pitch_chart.keys(), pitch_chart.values()))
